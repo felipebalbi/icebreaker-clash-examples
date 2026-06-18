@@ -1,0 +1,12 @@
+# iCEbreaker pin constraints (Lattice iCE40 UP5K, sg48 package).
+#
+# Port names must match the `topEntity` named ports in src/Blinky.hs
+# (`clk`, `led`). There is no reset line: the design relies on the iCE40
+# power-up (BOOT) state, so no reset pin is constrained.
+
+# 12 MHz oscillator
+set_io clk 35
+set_frequency clk 12
+
+# Green user LED
+set_io led 11

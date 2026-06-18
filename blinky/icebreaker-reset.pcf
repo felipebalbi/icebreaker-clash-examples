@@ -1,0 +1,19 @@
+# iCEbreaker pin constraints for the button-reset Blinky variant
+# (Lattice iCE40 UP5K, sg48 package).
+#
+# Same as icebreaker.pcf but adds the on-board user button so the two designs
+# don't share one bare pcf: BlinkyWithReset.topEntity has an extra `btn` port,
+# and nextpnr errors on a pcf whose ports don't match the design.
+#
+# Port names must match the `topEntity` named ports in src/BlinkyWithReset.hs
+# (`clk`, `rst`, `led`).
+
+# 12 MHz oscillator
+set_io clk 35
+set_frequency clk 12
+
+# Green user LED
+set_io led 11
+
+# On-board user button (BTN_N, active-low) -> reset
+set_io rst 10
