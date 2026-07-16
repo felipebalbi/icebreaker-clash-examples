@@ -29,27 +29,27 @@ the counter at 0 for the first cycle, after which it free-runs.
 -}
 ledStream :: Int -> [C.Bit]
 ledStream n =
-        C.sampleN @C.System
-                n
-                ( C.withClockResetEnable
-                        C.clockGen
-                        C.resetGen
-                        C.enableGen
-                        (blink (C.SNat @4))
-                )
+  C.sampleN @C.System
+    n
+    ( C.withClockResetEnable
+        C.clockGen
+        C.resetGen
+        C.enableGen
+        (blink (C.SNat @4))
+    )
 
 -- | Number of @0 -> 1@ / @1 -> 0@ transitions in a bit stream.
 countToggles :: [C.Bit] -> Int
 countToggles xs =
-        List.length (List.filter id (List.zipWith (/=) xs (List.drop 1 xs)))
+  List.length (List.filter id (List.zipWith (/=) xs (List.drop 1 xs)))
 
 blinkyTests :: TestTree
 blinkyTests =
-        testGroup
-                "Blinky"
-                [ testCase "LED toggles over several periods" $ do
-                        let toggles = countToggles (ledStream 64)
-                        assertBool
-                                ("expected the LED to toggle at least twice, saw " ++ show toggles)
-                                (toggles >= 2)
-                ]
+  testGroup
+    "Blinky"
+    [ testCase "LED toggles over several periods" $ do
+        let toggles = countToggles (ledStream 64)
+        assertBool
+          ("expected the LED to toggle at least twice, saw " ++ show toggles)
+          (toggles >= 2)
+    ]

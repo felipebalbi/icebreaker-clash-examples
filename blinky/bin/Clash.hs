@@ -2,7 +2,7 @@
 
    Generate Verilog with:
 
-       stack run clash -- Blinky --verilog
+       cabal run clash -- Blinky --verilog
 
    The HDL lands in verilog/Blinky.topEntity/. This file is taken verbatim
    from the upstream clash-starters projects. -}

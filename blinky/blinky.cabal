@@ -96,7 +96,7 @@ library
   default-language: Haskell2010
 
 -- Builds the executable 'clash', with the blinky project in scope.
--- Generate Verilog with:  stack run clash -- Blinky --verilog
+-- Generate Verilog with:  cabal run clash -- Blinky --verilog
 executable clash
   main-is: bin/Clash.hs
   default-language: Haskell2010
@@ -108,7 +108,7 @@ executable clash
     ghc-options: -dynamic
 
 -- Builds the executable 'clashi', the Clash REPL, with the blinky project in
--- scope.  Start it with:  stack run clashi
+-- scope.  Start it with:  cabal run clashi
 executable clashi
   main-is: bin/Clashi.hs
   default-language: Haskell2010
@@ -126,6 +126,7 @@ test-suite test-library
   main-is: unittests.hs
   other-modules:
     Tests.Blinky
+    Tests.BlinkyWithReset
   build-depends:
     blinky,
     tasty >= 1.2 && < 1.6,

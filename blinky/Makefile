@@ -5,7 +5,7 @@
 # Two-stage build, mirroring the upstream clash-starters `orangecrab` project
 # but retargeted from the ECP5 to the iCE40 (iCEbreaker) toolchain:
 #
-#   Stage 1  Clash + GHC compile src/ and emit Verilog   (stack)
+#   Stage 1  Clash + GHC compile src/ and emit Verilog   (cabal)
 #   Stage 2  yosys -> nextpnr-ice40 -> icepack -> iceprog (this Makefile)
 #
 # NAME is the Haskell module holding the top entity; TOP is the entity itself
@@ -78,7 +78,7 @@ $(BUILDDIR)/01-hdl/$(TOP).v: verilog/$(NAME).$(TOP)/$(TOP).v
 	cp -a verilog/$(NAME).$(TOP) $(BUILDDIR)/01-hdl
 
 # 1a. Generate Verilog from Clash. Upstream orangecrab leaves this to a manual
-#     `stack run clash -- Blink --verilog`; we wire it into make so the whole
+#     `cabal run clash -- Blink --verilog`; we wire it into make so the whole
 #     pipeline runs from a single `make`.
 verilog/$(NAME).$(TOP)/$(TOP).v: $(shell find src -name '*.hs')
 	$(CLASH) $(NAME) --verilog
@@ -93,6 +93,22 @@ test:
 	$(TEST)
 
 ##----------------------------------------------------------------------------##
+#   Formatting (fourmolu)                                                      #
+##----------------------------------------------------------------------------##
+
+# Every Haskell source file. Shell-free discovery via $(wildcard) (a make
+# built-in), covering src/, src/*/ (Blinky/), tests/, tests/Tests/, and bin/.
+HS = $(wildcard src/*.hs src/*/*.hs tests/*.hs tests/*/*.hs bin/*.hs)
+
+# Rewrite every file in place to the fourmolu.yaml style.
+format:
+	$(FOURMOLU) --mode inplace $(HS)
+
+# Fail (non-zero exit) if anything is unformatted or non-idempotent. Used by CI.
+format-check:
+	$(FOURMOLU) --check-idempotence --mode check $(HS)
+
+##----------------------------------------------------------------------------##
 #   Cleanup                                                                    #
 ##----------------------------------------------------------------------------##
 
@@ -103,5 +119,5 @@ clean:
 #   Special Targets                                                            #
 ##----------------------------------------------------------------------------##
 
-.PHONY: default clean upload synth netlist bitstream test
+.PHONY: default clean upload synth netlist bitstream test format format-check
 .SECONDARY:

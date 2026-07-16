@@ -19,8 +19,12 @@ straight to other Clash projects.
 
 ## Toolchain
 
-- [`stack`](https://docs.haskellstack.org/) — fetches GHC + Clash, builds the
-  design, runs tests, and generates Verilog (`stack run clash -- <Top> --verilog`).
+- GHC 9.10.3 + [`cabal`](https://www.haskell.org/cabal/) (e.g. via
+  [`ghcup`](https://www.haskell.org/ghcup/)) — cabal fetches Clash, builds the
+  design, runs tests, and generates Verilog (`cabal run clash -- <Top> --verilog`).
+- [`fourmolu`](https://github.com/fourmolu/fourmolu) — Haskell formatter
+  (`make format` / `make format-check`); style lives in each example's
+  `fourmolu.yaml`.
 - `yosys`, `nextpnr-ice40`, `icepack`, `iceprog` — synthesis, place & route,
   bitstream packing, and programming. All ship in the
   [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build/releases).
@@ -29,8 +33,8 @@ straight to other Clash projects.
 
 ```sh
 cd blinky
-stack build      # first run installs GHC + compiles Clash (~10-15 min cold)
-stack test       # run the example's test-suite
+cabal build      # first run compiles Clash into the cabal store (~10-15 min cold)
+cabal test       # run the example's test-suite
 make             # Clash -> Verilog -> bitstream
 make upload      # program the iCEbreaker
 ```

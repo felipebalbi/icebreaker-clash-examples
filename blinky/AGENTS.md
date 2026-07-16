@@ -27,7 +27,7 @@ the top-level `src/` vs `tests/` dirs, exactly like orangecrab.
 
 ## Build flow (two stages)
 
-1. **Clash → Verilog (stack):** `stack run clash -- Blinky --verilog`, which the
+1. **Clash → Verilog (cabal):** `cabal run clash -- Blinky --verilog`, which the
    `bin/Clash.hs` wrapper drives. Output: `verilog/Blinky.topEntity/topEntity.v`.
 2. **Gates → board (make):** `Makefile` runs `yosys → nextpnr-ice40 → icepack →
    iceprog`. Tool paths come from `build.cfg` (override in `build.cfg.local`).
@@ -54,7 +54,7 @@ is the iCE40 retarget of orangecrab's ECP5 one (`.asc`/`.bin`/`icepack` replace
   `SNat @CounterWidth`.
 - **Per-file `LANGUAGE` pragmas are usually unnecessary** in `src/` — the Clash
   compiler enables its needed extensions by default, and `blinky.cabal`'s
-  `common-options` supplies them for `stack build`/`stack test`. Only add a
+  `common-options` supplies them for `cabal build`/`cabal test`. Only add a
   pragma for an extension that is in *neither* set (e.g. `NumericUnderscores`
   in `Blinky/Domain.hs`).
 - The `blinky.cabal` `ghc-options` (`-fexpose-all-unfoldings`, `-fno-worker-wrapper`,
@@ -63,16 +63,16 @@ is the iCE40 retarget of orangecrab's ECP5 one (`.asc`/`.bin`/`icepack` replace
 
 ## Tests
 
-- `stack test` runs the tasty suite. Blinky has no data inputs, so there is no
+- `cabal test` runs the tasty suite. Blinky has no data inputs, so there is no
   hedgehog property to write (unlike orangecrab's `blink`); the test instead
   `sampleN`s a small-width instance and asserts the LED toggles. Plain Haskell
   on the output stream — no simulator.
 
 ## What NOT to do
 
-- Don't reintroduce a `Makefile`-less "stack-only" flow or `src/{hw,sim}`
-  nesting; the whole point of this repo is to follow the upstream clash-starters
-  conventions.
-- Don't bump Clash off the `stack.yaml` pin without updating the
-  `clash-prelude` bound in `blinky.cabal`.
+- Don't reintroduce a `Makefile`-less flow (the Haskell build bypassing the gate
+  Makefile) or `src/{hw,sim}` nesting; the whole point of this repo is to follow
+  the upstream clash-starters conventions.
+- Don't bump Clash off the `cabal.project` pin without updating both the
+  `cabal.project.freeze` lock and the `clash-prelude` bound in `blinky.cabal`.
 - Don't drive the LED through a reset net — see the no-reset note above.

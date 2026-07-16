@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  hdl:
+    name: HDL (Clash + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: blinky
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          ghc-version: '9.10.3'
+          cabal-version: 'latest'
+
+      - name: Cache cabal store + dist-newstyle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.setup.outputs.cabal-store }}
+            blinky/dist-newstyle
+          key: cabal-${{ runner.os }}-${{ hashFiles('blinky/cabal.project.freeze', 'blinky/cabal.project', 'blinky/blinky.cabal') }}
+          restore-keys: |
+            cabal-${{ runner.os }}-
+
+      - name: Update package index
+        run: cabal update
+
+      - name: Build
+        run: cabal build --enable-tests all
+
+      - name: Test (tasty)
+        run: cabal test all
+
+      - name: Clash -> Verilog codegen smoke (Blinky)
+        run: cabal run clash -- Blinky --verilog
+
+      - name: Clash -> Verilog codegen smoke (BlinkyWithReset)
+        run: cabal run clash -- BlinkyWithReset --verilog
+
+  haskell-format:
+    name: Haskell format (fourmolu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reads blinky/fourmolu.yaml (per-file upward search) and blinky/blinky.cabal
+      # (for default-extensions). Pin the version so CI matches local installs.
+      # Requires >= v13: fourmolu 0.20.0.0 ships .zip archives, and only
+      # run-fourmolu v13+ downloads/extracts them (v11 fetched a bare binary URL
+      # that now 404s, which the action mislabels as "detected unformatted files").
+      - uses: haskell-actions/run-fourmolu@v13
+        with:
+          version: "0.20.0.0"
+          pattern: |
+            blinky/**/*.hs

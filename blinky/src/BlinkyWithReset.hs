@@ -1,61 +1,45 @@
 {- |
-Blinking LED for the iCEbreaker, but reset from the on-board push button.
+Blinking LED with an explicit reset — the @BlinkyWithReset@ variant.
 
-Same divider as "Blinky" (it reuses 'Blinky.blink' unchanged); the only
-difference is that the counter is now held in reset while the button is
-pressed, instead of relying solely on the power-up @init@ value. Releasing the
-button restarts the blink from 0.
+Identical counter to "Blinky", but instead of tying the reset off it exposes an
+asynchronous, active-low @reset@ port wired (via @icebreaker-reset.pcf@) to the
+iCEbreaker user button on pin 10. Hold the button to clamp the counter at 0
+(LED off); release it to run. This is the Clash port of the SpinalHDL
+@BlinkyWithReset@.
 
-== Why this needs a synchronizer (the whole point of this variant)
+== How the reset gets its polarity
 
-The iCEbreaker's user button (@BTN_N@, pin 10) is __active-low__ — released is
-high, pressing pulls it low — and it is __asynchronous__ to the 12 MHz clock and
-mechanically bouncy. Feeding such a signal straight into register resets is
-unsafe: if the de-assert (release) lands too close to a clock edge a register can
-go metastable, and different registers may leave reset on different cycles.
+The active-low behaviour lives entirely in the clock domain: 'Dom12Rst' is
+declared with @vResetKind = Asynchronous@ and @vResetPolarity = ActiveLow@, so a
+@'Reset' Dom12Rst@ port /is/ an active-low asynchronous reset. The button idles
+high (pull-up) and shorts to ground when pressed, which matches active-low
+exactly. This is the same pattern the upstream orangecrab project uses for its
+button reset — no per-bit polarity juggling in the logic.
 
-The fix is the classic __asynchronous-assert / synchronous-deassert__ scheme:
-assert reset immediately (so even a glitch is safe), but only release it after
-the clean edge has been clocked through two flip-flops. 'resetSynchronizer' is
-exactly that 2-FF reset synchronizer; because 'Blinky.Domain.Dom12' is an
-asynchronous-reset domain, it gives async-assert with a 2-FF synchronous
-release for free.
-
-== Reset construction, read as a pipeline
-
-@
-unsafeFromActiveLow  -- "this Bool is an active-low reset" (asserted when low)
-        |               — \"unsafe\" precisely because it is not yet synchronized
-resetSynchronizer clk -- the 2-FF synchronizer that makes the release safe
-@
-
-No debounce is needed: for a /reset/, a bouncing release just re-extends the
-reset pulse harmlessly (unlike a button that increments something).
+The counter itself ('blink', shared with "Blinky") is reused unchanged: it is
+polymorphic in the clock domain, so the only difference between the two tops is
+what reset reaches the hidden @register@.
 -}
 module BlinkyWithReset where
 
-import Blinky (CounterWidth, blink)
-import Blinky.Domain (Dom12)
 import Clash.Annotations.TH
 import Clash.Prelude
 
-{- | Synthesis entry point. The @"clk" :::@ / @"rst" :::@ / @"led" :::@
-named-port annotations (plus 'makeTopEntity' below) fix the generated Verilog
-port names so @icebreaker-reset.pcf@ binds to the right wires. The @rst@ port
-is the raw active-low button pin; the actual 'Reset' is built from it below.
+import Blinky (CounterWidth, blink)
+import Blinky.Domain (Dom12Rst)
+
+{- | Synthesis entry point. Unlike "Blinky"'s 'topEntity' this carries a real
+@reset@ port; 'makeTopEntity' names it from the @"reset" :::@ annotation so
+@icebreaker-reset.pcf@ can bind it to the button.
 -}
 topEntity ::
-        -- | 12 MHz board clock (iCEbreaker pin 35)
-        "clk" ::: Clock Dom12 ->
-        -- | On-board user button, active-low (iCEbreaker pin 10); drives reset
-        "rst" ::: Signal Dom12 Bit ->
-        -- | On-board LED (iCEbreaker pin 11)
-        "led" ::: Signal Dom12 Bit
-topEntity clk rstPin = withClockResetEnable clk rst enableGen (blink (SNat @CounterWidth))
-    where
-        -- Active-low button -> Reset (still unsafe: not aligned to clk) -> run
-        -- the release through the 2-FF synchronizer so registers leave reset
-        -- cleanly on the same cycle.
-        rst = resetSynchronizer clk (unsafeFromActiveLow (bitToBool <$> rstPin))
+  -- | 12 MHz board clock (iCEbreaker pin 35)
+  "clk" ::: Clock Dom12Rst ->
+  -- | Active-low reset from the user button (iCEbreaker pin 10)
+  "reset" ::: Reset Dom12Rst ->
+  -- | On-board LED (iCEbreaker pin 11)
+  "led" ::: Signal Dom12Rst Bit
+topEntity clk reset =
+  withClockResetEnable clk reset enableGen (blink (SNat @CounterWidth))
 
 makeTopEntity 'topEntity

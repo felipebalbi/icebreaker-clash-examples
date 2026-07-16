@@ -42,16 +42,16 @@ annotations (plus 'makeTopEntity' below) fix the generated Verilog port
 names so @icebreaker.pcf@ binds to the right wires.
 -}
 topEntity ::
-        -- | 12 MHz board clock (iCEbreaker pin 35)
-        "clk" ::: Clock Dom12 ->
-        -- | On-board LED (iCEbreaker pin 11)
-        "led" ::: Signal Dom12 Bit
+  -- | 12 MHz board clock (iCEbreaker pin 35)
+  "clk" ::: Clock Dom12 ->
+  -- | On-board LED (iCEbreaker pin 11)
+  "led" ::: Signal Dom12 Bit
 topEntity clk = withClockResetEnable clk noReset enableGen (blink (SNat @CounterWidth))
-    where
-        -- No user-reset pin on the iCE40: tie reset permanently de-asserted so the
-        -- counter relies on its power-up @init@ value (BOOT-reset equivalent) and
-        -- Clash emits no @reset@ port.
-        noReset = unsafeFromActiveHigh (pure False)
+ where
+  -- No user-reset pin on the iCE40: tie reset permanently de-asserted so the
+  -- counter relies on its power-up @init@ value (BOOT-reset equivalent) and
+  -- Clash emits no @reset@ port.
+  noReset = unsafeFromActiveHigh (pure False)
 
 {- | The actual circuit, polymorphic in both the clock domain and the counter
 width. The width is passed as an 'SNat' so the same definition elaborates
@@ -62,15 +62,15 @@ delays its argument by one cycle, so this is a free-running counter that
 starts at 0, not an infinite loop.
 -}
 blink ::
-        forall dom n.
-        (HiddenClockResetEnable dom, KnownNat n, 1 <= n) =>
-        -- | Counter width
-        SNat n ->
-        -- | LED output: the counter's most-significant bit
-        Signal dom Bit
+  forall dom n.
+  (HiddenClockResetEnable dom, KnownNat n, 1 <= n) =>
+  -- | Counter width
+  SNat n ->
+  -- | LED output: the counter's most-significant bit
+  Signal dom Bit
 blink SNat = msb <$> counter
-    where
-        counter :: Signal dom (Unsigned n)
-        counter = register 0 (counter + 1)
+ where
+  counter :: Signal dom (Unsigned n)
+  counter = register 0 (counter + 1)
 
 makeTopEntity 'topEntity

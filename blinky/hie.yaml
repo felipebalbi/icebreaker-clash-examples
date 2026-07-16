@@ -1,10 +1,10 @@
 cradle:
-  stack:
+  cabal:
   - path: "src"
-    component: "blinky:lib"
+    component: "lib:blinky"
   - path: "bin/Clash.hs"
-    component: "blinky:exe:clash"
+    component: "exe:clash"
   - path: "bin/Clashi.hs"
-    component: "blinky:exe:clashi"
+    component: "exe:clashi"
   - path: "tests"
-    component: "blinky:test:test-library"
+    component: "test:test-library"
