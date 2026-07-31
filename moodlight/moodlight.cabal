@@ -78,12 +78,16 @@ common common-options
   build-depends:
     base,
     Cabal,
+
+    -- clash-prelude will set suitable version bounds for the plugins
     clash-prelude >= 1.10.0 && < 1.12,
     ghc-typelits-natnormalise,
     ghc-typelits-extra,
     ghc-typelits-knownnat,
     -- Control.Monad.State.Strict, for the mealyS state-monad Mealy machines.
-    transformers
+    -- mtl rather than transformers: that is the module Clash's own mealyS
+    -- haddock imports, and mtl re-exports the transformers State anyway.
+    mtl
 
 library
   import: common-options
@@ -122,6 +126,8 @@ test-suite test-library
   main-is: unittests.hs
   other-modules:
     Tests.Gamma
+    Tests.Phase
+    Tests.Pwm
   build-depends:
     moodlight,
     tasty >= 1.2 && < 1.6,

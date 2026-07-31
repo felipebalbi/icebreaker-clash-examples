@@ -24,7 +24,7 @@ gammaTests =
   testGroup
     "Gamma"
     [ testCase "endpoints are exact" $ do
-        assertEqual "gamma 0" 0 (List.head levels)
+        assertEqual "gamma 0" 0 (levels List.!! 0)
         assertEqual "gamma 255" 255 (List.last levels)
     , testCase "curve is monotonic non-decreasing" $
         assertBool
