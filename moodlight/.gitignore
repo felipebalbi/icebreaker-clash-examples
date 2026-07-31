@@ -42,3 +42,6 @@ cabal.config
 /vhdl
 /verilog
 /systemverilog
+
+# yosys abc9 scratch file, written into CWD on every build
+abc.history
