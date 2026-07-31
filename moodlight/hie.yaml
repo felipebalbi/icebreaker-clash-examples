@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+  - path: "src"
+    component: "lib:moodlight"
+  - path: "bin/Clash.hs"
+    component: "exe:clash"
+  - path: "bin/Clashi.hs"
+    component: "exe:clashi"
+  - path: "tests"
+    component: "test:test-library"

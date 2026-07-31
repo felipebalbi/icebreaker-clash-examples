@@ -1,0 +1,24 @@
+-- Pin the Clash 1.10.0 toolchain on GHC 9.10.3, matching the sibling blinky
+-- example. cabal.project.freeze locks the entire transitive graph.
+
+packages: .
+
+with-compiler: ghc-9.10.3
+
+-- The `clash` executable runs GHC on the moodlight sources, whose -fplugin
+-- flags must resolve GHC.TypeLits.* solver modules. Writing a .ghc.environment
+-- file makes cabal's whole package closure visible to that nested GHC session.
+write-ghc-environment-files: always
+
+index-state: 2026-07-04T16:13:10Z
+
+tests: True
+
+constraints:
+  clash-ghc ==1.10.0,
+  clash-lib ==1.10.0,
+  clash-prelude ==1.10.0,
+  ghc-typelits-extra ==0.5.3,
+  ghc-typelits-knownnat ==0.8.3,
+  ghc-typelits-natnormalise ==0.9.5,
+  ghc-tcplugin-api ==0.18.2.1
