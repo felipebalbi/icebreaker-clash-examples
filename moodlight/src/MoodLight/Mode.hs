@@ -38,24 +38,6 @@ add a constructor and the cycle grows to fit.
 data Mode = Off | Solid | Breathe | Rainbow
   deriving (Generic, NFDataX, Eq, Show, Enum, Bounded)
 
-{- | An empty-body instance -- every method is a default. 'Bundle'\'s default
-associated type then gives @Unbundled dom Mode = Signal dom Mode@, which is how
-a product-free user type crosses a bundled boundary.
-
-The combinators below use 'mealyS', which is plain @Signal@-in\/@Signal@-out and
-needs no 'Bundle'. The instance is here for the bundled variants: @mealySB@ has
-@(Bundle i, Bundle o)@ in its context and hands back @Unbundled dom o@, so
-without this instance @Unbundled dom Mode@ is stuck and you get
-
-@
-Couldn't match type: Unbundled dom Mode with: Signal dom Mode
-@
-
-Clash ships exactly these empty instances for 'Bool', 'Unsigned', 'Bit' and
-friends; this is the same one-liner for a user enum.
--}
-instance Bundle Mode
-
 -- | Advance one step, wrapping at the end.
 nextMode :: Mode -> Mode
 nextMode m = if m == maxBound then minBound else succ m
