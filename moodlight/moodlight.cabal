@@ -126,6 +126,7 @@ test-suite test-library
   main-is: unittests.hs
   other-modules:
     Tests.Gamma
+    Tests.Mode
     Tests.Phase
     Tests.Pwm
   build-depends:
