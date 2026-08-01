@@ -14,7 +14,16 @@ index-state: 2026-07-04T16:13:10Z
 
 tests: True
 
+-- ice40-prim supplies the SB_RGBA_DRV blackbox (Ice40.Rgb). Its upper bounds
+-- predate GHC 9.10 and Clash 1.10, but nothing in it actually breaks: the
+-- library builds clean and the blackbox generates correct Verilog. allow-newer
+-- is the whole fix, and the bound bump is worth sending upstream.
+allow-newer:
+  ice40-prim:base,
+  ice40-prim:clash-prelude
+
 constraints:
+  ice40-prim ==0.3.1.4,
   clash-ghc ==1.10.0,
   clash-lib ==1.10.0,
   clash-prelude ==1.10.0,

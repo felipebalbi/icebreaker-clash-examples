@@ -7,13 +7,12 @@
 #   Stage 1  Clash + GHC compile src/ and emit Verilog   (cabal)
 #   Stage 2  yosys -> nextpnr-ice40 -> icepack -> iceprog (this Makefile)
 #
-# Unlike blinky, the module yosys synthesises is NOT the Clash top entity: the
-# RGB pins need an SB_RGBA_DRV instance, which lives in a hand-written wrapper.
-# Hence CLASH_TOP (what Clash emits) and SYNTH_TOP (what yosys builds).
+# The SB_RGBA_DRV hard block the RGB pins require comes from ice40-prim as a
+# Clash blackbox, so there is no hand-written HDL and no wrapper module: the
+# Clash top entity is also the synthesis top, exactly as in blinky.
 
 NAME = MoodLight
-CLASH_TOP = topEntity
-SYNTH_TOP = icebreaker_top
+TOP = topEntity
 BUILDDIR = _build/$(NAME)
 
 PCF ?= icebreaker.pcf
@@ -33,45 +32,44 @@ PNR_FLAGS = \
 
 default: bitstream
 
-upload: $(BUILDDIR)/03-bitstream/$(SYNTH_TOP).bin
+upload: $(BUILDDIR)/03-bitstream/$(TOP).bin
 	$(PROG) $<
 
-synth: $(BUILDDIR)/02-net/$(SYNTH_TOP).json
+synth: $(BUILDDIR)/02-net/$(TOP).json
 
-netlist: $(BUILDDIR)/03-bitstream/$(SYNTH_TOP).asc
+netlist: $(BUILDDIR)/03-bitstream/$(TOP).asc
 
-bitstream: $(BUILDDIR)/03-bitstream/$(SYNTH_TOP).bin
+bitstream: $(BUILDDIR)/03-bitstream/$(TOP).bin
 
 # 4. Pack (ASC -> BIN)
-$(BUILDDIR)/03-bitstream/$(SYNTH_TOP).bin: $(BUILDDIR)/03-bitstream/$(SYNTH_TOP).asc
+$(BUILDDIR)/03-bitstream/$(TOP).bin: $(BUILDDIR)/03-bitstream/$(TOP).asc
 	$(PACK) $< $@
 
 # 3. Place & route (JSON -> ASC)
-$(BUILDDIR)/03-bitstream/$(SYNTH_TOP).asc: $(BUILDDIR)/02-net/$(SYNTH_TOP).json $(PCF)
+$(BUILDDIR)/03-bitstream/$(TOP).asc: $(BUILDDIR)/02-net/$(TOP).json $(PCF)
 	mkdir -p $(BUILDDIR)/03-bitstream
 	$(PNR) --json $< --asc $@ $(PNR_FLAGS)
 
-# 2. Synthesis. Reads the generated .vg AND the hand-written wrapper .v, and
-#    builds the wrapper as the top.
-$(BUILDDIR)/02-net/$(SYNTH_TOP).json: $(BUILDDIR)/01-hdl/$(CLASH_TOP).vg verilog-support/$(SYNTH_TOP).v
+# 2. Synthesis (Verilog -> JSON).
+$(BUILDDIR)/02-net/$(TOP).json: $(BUILDDIR)/01-hdl/$(TOP).vg
 	mkdir -p $(BUILDDIR)/02-net $(BUILDDIR)/log
 	$(YOSYS) \
 		-l $(BUILDDIR)/log/synth.log \
-		-p 'read_verilog $(BUILDDIR)/01-hdl/*.vg verilog-support/*.v; synth_ice40 -top $(SYNTH_TOP) -json $@'
+		-p 'read_verilog $(BUILDDIR)/01-hdl/*.vg; synth_ice40 -top $(TOP) -json $@'
 
 # 1b. Stage the Clash HDL, renaming .v to .vg.
 #
 #     tokei maps .v to Coq, whose comment syntax is (* *), so it counts
 #     Verilog's /* */ and // as code. .vg is tokei's Verilog extension, and it
 #     also usefully marks "generated" against the hand-written wrapper's .v.
-$(BUILDDIR)/01-hdl/$(CLASH_TOP).vg: verilog/$(NAME).$(CLASH_TOP)/$(CLASH_TOP).v
+$(BUILDDIR)/01-hdl/$(TOP).vg: verilog/$(NAME).$(TOP)/$(TOP).v
 	mkdir -p $(BUILDDIR)
 	rm -Rf $(BUILDDIR)/01-hdl
-	cp -a verilog/$(NAME).$(CLASH_TOP) $(BUILDDIR)/01-hdl
-	mv $(BUILDDIR)/01-hdl/$(CLASH_TOP).v $@
+	cp -a verilog/$(NAME).$(TOP) $(BUILDDIR)/01-hdl
+	mv $(BUILDDIR)/01-hdl/$(TOP).v $@
 
 # 1a. Generate Verilog from Clash.
-verilog/$(NAME).$(CLASH_TOP)/$(CLASH_TOP).v: $(shell find src -name '*.hs')
+verilog/$(NAME).$(TOP)/$(TOP).v: $(shell find src -name '*.hs')
 	$(CLASH) $(NAME) --verilog
 
 ##----------------------------------------------------------------------------##

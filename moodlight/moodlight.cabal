@@ -87,7 +87,11 @@ common common-options
     -- Control.Monad.State.Strict, for the mealyS state-monad Mealy machines.
     -- mtl rather than transformers: that is the module Clash's own mealyS
     -- haddock imports, and mtl re-exports the transformers State anyway.
-    mtl
+    mtl,
+
+    -- Clash blackboxes for the iCE40 hard IP. Ice40.Rgb is the SB_RGBA_DRV
+    -- instantiation the RGB pins require; see cabal.project for the bounds.
+    ice40-prim
 
 library
   import: common-options
