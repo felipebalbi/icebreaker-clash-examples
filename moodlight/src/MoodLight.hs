@@ -12,13 +12,26 @@ Like "Blinky", the reset is tied permanently de-asserted, so Clash emits no
 bitstream. The iCE40 has no user-reset pin, and here the button is needed as the
 mode input anyway.
 
-== The RGB pins are not ordinary I\/O
+== Why the RGB pins need the hard block
 
-Pins 39\/40\/41 on the UP5K are constant-current open-drain outputs that can only
-be driven through the @SB_RGBA_DRV@ hard block. That block is not part of
-clash-prelude, but it does not need a hand-written Verilog wrapper either:
-@ice40-prim@ ships it as a Clash blackbox, so 'rgbDriver' below instantiates it
-from Haskell and @topEntity@ is the only synthesis top there is.
+Pins 39\/40\/41 are the @SB_RGBA_DRV@ hard block's constant-current sinks, but
+the block is not an access gate. The pads can be driven as ordinary open-drain
+I\/O, and other iCEbreaker designs do exactly that: @ws2812_blink@ drives pin 39
+through a plain @SB_IO@, and @mole@ drives pin 40 from a plain output. Lattice
+says the same thing -- set @RGBx_CURRENT@ to @"0b000000"@ and the pad is
+released to @SB_IO_OD@.
+
+What makes the macro necessary here is the board, not the chip. The iCEbreaker
+runs the RGB LED's three cathodes straight to those pins through normally-closed
+solder jumpers, with no series resistors anywhere, while every discrete LED on
+the board gets a 330R. That is deliberate: the design assumes the macro's
+regulated sink, which 'rgbDriver' configures to 2 mA per channel. Drop it and
+the only thing limiting current is the pad's on-resistance against the LED's
+forward drop.
+
+@SB_RGBA_DRV@ is not part of clash-prelude, but it needs no hand-written Verilog
+either: @ice40-prim@ ships it as a Clash blackbox, so 'rgbDriver' below
+instantiates it from Haskell and @topEntity@ is the only synthesis top there is.
 -}
 module MoodLight where
 
@@ -53,10 +66,11 @@ topEntity clk btn =
 
 {- | The @SB_RGBA_DRV@ hard block, as a Clash blackbox.
 
-The three RGB pins are constant-current open-drain outputs and cannot be driven
-as ordinary I\/O, so this macro is mandatory. 'rgbPrim' comes from @ice40-prim@
-and carries the Verilog template with it, which is why there is no hand-written
-HDL anywhere in this project.
+The macro is what current-limits the RGB LED -- see the note above -- so it is
+mandatory on this board even though the pads themselves could be driven as
+ordinary I\/O. 'rgbPrim' comes from @ice40-prim@ and carries the Verilog
+template with it, which is why there is no hand-written HDL anywhere in this
+project.
 
 Half-current mode at the lowest per-channel step, matching the upstream
 @sb_rgba_blink@ example: plenty bright for an indicator without washing out.
@@ -70,8 +84,10 @@ rgbDriver ::
   -- | Packed @{RGB0, RGB1, RGB2}@ pin drive
   Signal dom (BitVector 3)
 rgbDriver pwm =
-  pack <$> rgbPrim "0b1" "0b000001" "0b000001" "0b000001" (pure high) (pure high) r g b
+  pack <$> rgbPrim halfCurrent step1 step1 step1 (pure high) (pure high) r g b
  where
+  halfCurrent = "0b1"
+  step1 = "0b000001"
   (r, g, b) = unbundle (unpack <$> pwm)
 
 -- | The design proper, polymorphic in the domain so it can be simulated.

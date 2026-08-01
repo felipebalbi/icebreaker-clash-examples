@@ -1,7 +1,8 @@
 # iCEbreaker pin constraints (Lattice iCE40 UP5K, sg48 package).
 #
-# Port names must match the wrapper in verilog-support/icebreaker_top.v, which
-# is what yosys synthesises -- not the Clash topEntity directly.
+# Port names must match MoodLight.topEntity, which is what yosys synthesises.
+# There is no wrapper module: the SB_RGBA_DRV instance is a Clash blackbox from
+# ice40-prim, so the Clash top entity is also the synthesis top.
 
 # 12 MHz oscillator
 set_io clk 35
@@ -10,8 +11,11 @@ set_frequency clk 12
 # User button, active low (idles high through a pull-up)
 set_io btn 10
 
-# RGB LED. These three pins are constant-current open-drain outputs driven by
-# the UP5K's SB_RGBA_DRV hard block; they cannot be used as ordinary I/O.
+# RGB LED. These three pins are the SB_RGBA_DRV hard block's constant-current
+# sinks. They can be driven as ordinary open-drain I/O -- the macro is not an
+# access gate -- but the iCEbreaker wires the LED's cathodes straight to them
+# with no series resistors, so the macro's regulated 2 mA is the only current
+# limit there is. See the note in src/MoodLight.hs.
 #
 # Order matters and matches pack (r, g, b) in MoodLight.Pwm.pwmRGB:
 # index 2 is red, index 1 green, index 0 blue.

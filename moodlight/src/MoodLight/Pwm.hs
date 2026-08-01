@@ -32,8 +32,8 @@ One counter and three comparators, not three counters -- the channels must stay
 phase-aligned, and it is less hardware.
 
 The output bit order is @pack (r, g, b)@, so index 2 is red, index 1 green and
-index 0 blue. @icebreaker.pcf@ and @verilog-support\/icebreaker_top.v@ both
-depend on that ordering.
+index 0 blue. @icebreaker.pcf@ and 'MoodLight.rgbDriver' both depend on that
+ordering.
 -}
 pwmRGB ::
   (HiddenClockResetEnable dom) =>
