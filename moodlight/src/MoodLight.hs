@@ -23,11 +23,11 @@ released to @SB_IO_OD@.
 
 What makes the macro necessary here is the board, not the chip. The iCEbreaker
 runs the RGB LED's three cathodes straight to those pins through normally-closed
-solder jumpers, with no series resistors anywhere, while every discrete LED on
-the board gets a 330R. That is deliberate: the design assumes the macro's
-regulated sink, which 'rgbDriver' configures to 2 mA per channel. Drop it and
-the only thing limiting current is the pad's on-resistance against the LED's
-forward drop.
+solder jumpers, with no series resistor anywhere on the net, while the two user
+LEDs beside it are each limited through 330R. That is deliberate: the design
+assumes the macro's regulated sink, which 'rgbDriver' configures to 2 mA per
+channel. Drop it and the only thing limiting current is the pad's on-resistance
+against the LED's forward drop.
 
 @SB_RGBA_DRV@ is not part of clash-prelude, but it needs no hand-written Verilog
 either: @ice40-prim@ ships it as a Clash blackbox, so 'rgbDriver' below
