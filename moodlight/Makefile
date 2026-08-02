@@ -60,8 +60,8 @@ $(BUILDDIR)/02-net/$(TOP).json: $(BUILDDIR)/01-hdl/$(TOP).vg
 # 1b. Stage the Clash HDL, renaming .v to .vg.
 #
 #     tokei maps .v to Coq, whose comment syntax is (* *), so it counts
-#     Verilog's /* */ and // as code. .vg is tokei's Verilog extension, and it
-#     also usefully marks "generated" against the hand-written wrapper's .v.
+#     Verilog's /* */ and // as code. .vg is tokei's Verilog extension, so the
+#     generated HDL gets counted as Verilog rather than silently as Coq.
 $(BUILDDIR)/01-hdl/$(TOP).vg: verilog/$(NAME).$(TOP)/$(TOP).v
 	mkdir -p $(BUILDDIR)
 	rm -Rf $(BUILDDIR)/01-hdl
